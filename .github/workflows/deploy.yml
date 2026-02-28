@@ -9,11 +9,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout code
       - name: Checkout
         uses: actions/checkout@v3
 
-      # 2. Run tests
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -25,11 +23,6 @@ jobs:
       - name: Run tests
         run: pytest test_app.py -v
 
-      # 3. Build Docker image
-      - name: Build Docker image
-        run: docker build -t devops-demo:latest .
-
-      # 4. Deploy to EC2 via SSH
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -37,13 +30,10 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            # Pull latest code
             cd ~/devops-demo || git clone https://github.com/${{ github.repository }} ~/devops-demo
             cd ~/devops-demo && git pull
-
-            # Build and restart container
             docker build -t devops-demo:latest .
             docker stop devops-demo 2>/dev/null || true
-            docker rm   devops-demo 2>/dev/null || true
+            docker rm devops-demo 2>/dev/null || true
             docker run -d --name devops-demo -p 80:5000 devops-demo:latest
-            echo "Deployed successfully!"
+            echo "Deployed!"
